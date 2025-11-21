@@ -1,0 +1,21 @@
+        /* Đảm bảo font Inter được sử dụng */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Nền nhẹ nhàng */
+        }
+        .book-card-grid {
+            /* 5 cột trên desktop, 2-3 cột trên mobile/tablet */
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.5rem; /* Gap giữa các card */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .book-card-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .book-card-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
