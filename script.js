@@ -1,177 +1,112 @@
-        // Placeholder cho API Key. Canvas sẽ tự động cung cấp trong runtime.
-        const apiKey = ""; 
-
-        // Hàm tiện ích để thực hiện fetch với cơ chế Retry (sử dụng Exponential Backoff) - Vẫn giữ cho TTS
-        async function fetchWithRetry(url, options, retries = 3) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        if (response.status === 429) { // Too Many Requests
-                            throw new Error('Rate limit exceeded. Retrying...');
-                        }
-                        const errorBody = await response.json();
-                        throw new Error(`HTTP error! status: ${response.status}. Details: ${JSON.stringify(errorBody)}`);
-                    }
-                    return response;
-                } catch (error) {
-                    console.error(`Attempt ${i + 1} failed:`, error.message);
-                    if (i === retries - 1) throw error; 
-                    const delay = Math.pow(2, i) * 1000 + Math.floor(Math.random() * 1000); // 1s, 2s, 4s... + jitter
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-        
-        // Hàm tiện ích để chuyển base64 sang ArrayBuffer
-        function base64ToArrayBuffer(base64) {
-            const binaryString = window.atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        // Hàm tiện ích để chuyển PCM sang định dạng WAV
-        function pcmToWav(pcm16, sampleRate) {
-            const pcmLength = pcm16.length;
-            const buffer = new ArrayBuffer(44 + pcmLength * 2);
-            const view = new DataView(buffer);
-            const channels = 1;
-            const bitsPerSample = 16;
-            const bytesPerSample = bitsPerSample / 8;
-            const byteRate = sampleRate * channels * bytesPerSample;
-            const blockAlign = channels * bytesPerSample;
-
-            /* RIFF identifier */
-            view.setUint32(0, 0x52494646, false); // "RIFF"
-            /* file length */
-            view.setUint32(4, 36 + pcmLength * 2, true);
-            /* RIFF type */
-            view.setUint32(8, 0x57415645, false); // "WAVE"
-            /* format chunk identifier */
-            view.setUint32(12, 0x666d7420, false); // "fmt "
-            /* format chunk length */
-            view.setUint32(16, 16, true);
-            /* sample format (raw) */
-            view.setUint16(20, 1, true); // 1 = PCM
-            /* channel count */
-            view.setUint16(22, channels, true);
-            /* sample rate */
-            view.setUint32(24, sampleRate, true);
-            /* byte rate (sample rate * block align) */
-            view.setUint32(28, byteRate, true);
-            /* block align (channels * bytes per sample) */
-            view.setUint16(32, blockAlign, true);
-            /* bits per sample */
-            view.setUint16(34, bitsPerSample, true);
-            /* data chunk identifier */
-            view.setUint32(36, 0x64617461, false); // "data"
-            /* data chunk length */
-            view.setUint32(40, pcmLength * 2, true);
-
-            // Write PCM data
-            let offset = 44;
-            for (let i = 0; i < pcmLength; i++, offset += 2) {
-                view.setInt16(offset, pcm16[i], true);
-            }
-
-            return new Blob([view], { type: 'audio/wav' });
-        }
-
-
-        // Dữ liệu sách mẫu (đã xóa affiliateLink cũ, thêm buyLink mới)
+        // Dữ liệu sách mẫu
         const mockBookData = [
-            { bookName: "Quả Đắng - Ann Rule", categories: ["Trinh Thám", "Kinh Dị", "Y Học", "Tiểu Thuyết"], downloadLink: "https://1024terabox.com/s/1hyTMsnTfmtZ4l3nuOAe9Rw", buyLink: "https://adpvn.co/s/e8BQP", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/qua-dang-ann-rule-nguyen-dang-thuan-dich.jpg" },
-			{ bookName: "Đừng Để “Nó” Dụ - Manabu Kaminaga", categories: ["Kinh Dị", "Trinh Thám", "Tâm Lý Học", "Y Học"], downloadLink: "#", buyLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dung-de-no-du.jpg" },
-			{ bookName: "Sự Thật Chỉ Có Một - Lưu Liễm, Lý Viên Viên", categories: ["Kinh Dị", "Trinh Thám", "Tâm Lý Học", "Tiểu Thuyết"], downloadLink: "#", buyLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/su-that-chi-co-mot.jpg" },
-			{ bookName: "Một Ai Của Ngày Đó - Higashino Keigo", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/mot-ai-cua-ngay-do.jpg" },
-			{ bookName: "14 Ngày Đẫm Máu - Jeremy Bates", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1RdJMSRpuedywOKztvLFK5g", buyLink: "https://adpvn.co/s/eR0MR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/04/cover-9.jpg" },
-			{ bookName: "Shin – Cậu Bé Bút Chì - Usui Yoshito Full", categories: ["Truyện Tranh"], downloadLink: "https://1024terabox.com/s/1g7QF8W_vMbzQQLoiNNSoPg", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2023/12/shin-cau-be-but-chi.jpg" },
-			{ bookName: "Tù Nhân – Freida McFadden", categories: ["Lãng Mạn", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tu-nhan.jpg" },
-			{ bookName: "Đại Dịch Hủy Diệt (Bộ 2 tập) - Stephen King", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dai-dich-huy-diet-bo-2-tap.jpg" },
-			{ bookName: "Thảm Án Ma Nơ Canh - Stanislas-Andre Steeman", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-an-ma-no-canh.jpg" },
-			{ bookName: "Án Mạng Trong Lớp Học - Asakura Akinari", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-trong-lop-hoc.jpg" },
-			{ bookName: "Đêm Yên Tĩnh - Sophie Hannah", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dem-yen-tinh.jpg" },
-			{ bookName: "Kỳ Án Pháp Y 1 – Mật Mã Tử Vong - Lục Ngoạn", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-phap-y-mat-ma-tu-vong-chuyen-chua-ke-sau-canh-cua-phap-y.jpg" },
-			{ bookName: "Án Mạng Giữa Không Trung - Agatha Christie", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4ZJ9w", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-giua-khong-trung.jpg" },
-			{ bookName: "Grasshopper – Sát Thủ Báo Thù - Isaka Kotaro", categories: ["Phiêu Lưu", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/grasshopper-sat-thu-bao-thu.jpg" },
-			{ bookName: "Bầy Mèo Nổi Loạn - Okamoto Kido", categories: ["Huyền Ảo", "Kinh Dị", "Tôn Giáo", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/okamoto-kido-tuyen-tap-bay-meo-noi-loan.jpg" },
-			{ bookName: "Giải Mã Pháp Y – Những Câu Chuyện Từ Bóng Tối - Val McDermid", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/giai-ma-phap-y-nhung-cau-chuyen-tu-bong-toi.jpg" },
-			{ bookName: "Những Câu Chuyện Kinh Dị Khiến Bạn Dựng Tóc Gáy - Quỷ Cổ Nhân", categories: ["Huyền Ảo", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nhung-cau-chuyen-kinh-di-khien-ban-dung-toc-gay.jpg" },
-			{ bookName: "Người Đàn Ông Ấy - Hirano Keichiro", categories: ["Lãng Mạn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nguoi-dan-ong-ay.jpg" },
-			{ bookName: "Nghịch Lý 13 - Higashino Keigo", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nghich-ly-13.jpg" },
-			{ bookName: "Bút Ký Bảo Vệ Cổ Vật Trung Hoa - Nạp Lan Lãng Nguyệt", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/but-ky-bao-ve-co-vat-trung-hoa.jpg" },
-			{ bookName: "Thảm Họa Tuyết Trắng - Higashino Keigo", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-hoa-tuyet-trang.jpg" },
-			{ bookName: "Cuộc Chiến Trắng - Hoàng Dục Đức", categories: ["Đô Thị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/cuoc-chien-trang.jpg" },
-			{ bookName: "Con Lửng – Fredrik P. Winter", categories: ["Hiện Thực", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/con-lung.jpg" },
-			{ bookName: "Nhật Ký Điều Tra – Đằng Sau Tội Ác - Lưu Tinh Thần", categories: ["Hồi Ký", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nhat-ky-dieu-tra-dang-sau-toi-ac.jpg" },
-			{ bookName: "Tội Ác Có Thật - Jamie Frater", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/toi-ac-co-that.jpg" },
-			{ bookName: "Cái Bóng Trầm Mặc – Dật An", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/cai-bong-tram-mac.jpg" },
-			{ bookName: "Án Mạng Trên Bến Thuyền - Paula Hawkins", categories: ["Huyền Ảo", "Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-tren-ben-thuyen.jpg" },
-			{ bookName: "Dưới Cánh Xương Tàn - Kristen Perrin", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ho-so-castle-knoll-1-duoi-canh-xuong-tan.jpg" },
-			{ bookName: "Vật Chứng Mất Tích - David Baldacci", categories: ["Hiện Đại", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vat-chung-mat-tich.jpg" },
-			{ bookName: "Điểm Đoạt Mạng – Ngô Hiểu Lạc - Ngô Hiểu Lạc", categories: ["Kinh Dị", "Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/diem-doat-mang.jpg" },
-			{ bookName: "Kỳ Án Pháp Y 2: Truy Tìm Bằng Chứng – Lời Thì Thầm Của Tử Thi - Lục Ngoạn", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-phap-y-tap-2-truy-tim-bang-chung-loi-thi-tham-cua-tu-thi.jpg" },
-			{ bookName: "Án Mạng Vùng Lưỡng Hà - Agatha Christie", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-vung-luong-ha.jpg" },
-			{ bookName: "Hõm Chết – David Baldacci", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/hom-chet.jpg" },
-			{ bookName: "Ngôi Nhà Muôn Cánh Cửa - Tan Twan Eng", categories: ["Lịch Sử", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ngoi-nha-muon-canh-cua.jpg" },
-			{ bookName: "Báo Thù – Mười Một Câu Chuyện Tăm Tối - Ogawa Yoko", categories: ["Hiện Đại", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bao-thu-muoi-mot-cau-chuyen-tam-toi.jpg" },
-			{ bookName: "Tàng Long Quyết - Thân Thị Sơn Nhân", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tang-long-quyet.jpg" },
-			{ bookName: "Truy Đuổi Khói Tuyết - Higashino Keigo", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/truy-duoi-khoi-tuyet.jpg" },
-			{ bookName: "Vũ Điệu Cuồng Phong - Higashino Keigo", categories: ["Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vu-dieu-cuong-phong.jpg" },
-			{ bookName: "Sát Nhân Trong Chiếc Hộp Mắt Ma - Masahiro Imamura", categories: ["Kinh Dị", "Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/sat-nhan-trong-chiec-hop-mat-ma.jpg" },
-			{ bookName: "Đêm Định Mệnh Ở Barcelona - Cornell Woolrich", categories: ["Hiện Đại", "Kinh Dị", "Truyện Ngắn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dem-dinh-menh-o-barcelona.jpg" },
-			{ bookName: "Kẻ Khác – Guillaume Musso", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ke-khac.jpg" },
-			{ bookName: "Phân Tích Hành Vi Phạm Tội - Moriarty K", categories: ["Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vl3w5", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/phan-tich-hanh-vi-pham-toi-giai-ma-ky-an-the-gioi.jpg" },
-			{ bookName: "Tấm Gương Nứt Vỡ - Agatha Christie", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/eqkJR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tam-guong-nut-vo.jpg" },
-			{ bookName: "Quỷ Tiết – Hồng Nương Tử", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4Q5D2", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/quy-tiet.jpg" },
-			{ bookName: "Bảy Ngày Chờ Chết - Holly Jackson", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/V0gd5", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bay-ngay-cho-chet.jpg" },
-			{ bookName: "Ma Trùng - Dị Thể – Chan Ho-Kei", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Tâm Lý Học"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vmvg7", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ma-trung.jpg" },
-			{ bookName: "Ván Cược – Oh Yoon-Hee", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4Lr7Y", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/van-cuoc.jpg" },
-			{ bookName: "Thám Tử Thứ Tám - Alex Pavesi", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/eno2L", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-tu-thu-tam.jpg" },
-			{ bookName: "Chết Chùm – Donald Goines", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "https://adpvn.co/s/VpoaW", buyLink: "https://adpvn.co/s/V9oQM", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/chet-chum.jpg" },
-			{ bookName: "Bù Nhìn – Kim Lăng Vân", categories: ["Kinh Dị", "Tâm Lý Học", "Tiên Hiệp", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VJd77", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bu-nhin.jpg" },
-			{ bookName: "Bảy Ngày Phán Quyết - Kōtarō Isaka", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4ajmq", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bay-ngay-phan-quyet.jpg" },
-			{ bookName: "Rượu Độc – Higashino Keigo", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Tâm Lý Học"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vd5qw", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ruou-doc.jpg" },
-			{ bookName: "Két “Xác” – Hideo Yokoyama", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/N2dJB", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ket-xac.jpg" },
-			{ bookName: "Ác Não – Long Vĩ Bình", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VvQ1O", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ac-nao.jpg" },
+            { bookName: "Quả Đắng - Ann Rule", categories: ["Trinh Thám", "Kinh Dị", "Y Học", "Tiểu Thuyết"], downloadLink: "https://1024terabox.com/s/1hyTMsnTfmtZ4l3nuOAe9Rw", buyLink: "https://adpvn.co/s/e8BQP", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/qua-dang-ann-rule-nguyen-dang-thuan-dich.jpg" },
+            { bookName: "Đừng Để “Nó” Dụ - Manabu Kaminaga", categories: ["Kinh Dị", "Trinh Thám", "Tâm Lý Học", "Y Học"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vbpx9", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dung-de-no-du.jpg" },
+            { bookName: "Sự Thật Chỉ Có Một - Lưu Liễm, Lý Viên Viên", categories: ["Kinh Dị", "Trinh Thám", "Tâm Lý Học", "Tiểu Thuyết"], downloadLink: "#", buyLink: "https://adpvn.co/s/4Oa2J", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/su-that-chi-co-mot.jpg" },
+            { bookName: "Một Ai Của Ngày Đó - Higashino Keigo", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/eGK6X", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/mot-ai-cua-ngay-do.jpg" },
+            { bookName: "14 Ngày Đẫm Máu - Jeremy Bates", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1RdJMSRpuedywOKztvLFK5g", buyLink: "https://adpvn.co/s/eR0MR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/04/cover-9.jpg" },
+            { bookName: "Shin – Cậu Bé Bút Chì - Usui Yoshito Full", categories: ["Truyện Tranh"], downloadLink: "https://1024terabox.com/s/1g7QF8W_vMbzQQLoiNNSoPg", buyLink: "https://adpvn.co/s/erJq2", imageLink: "https://ebookvie.com/wp-content/uploads/2023/12/shin-cau-be-but-chi.jpg" },
+            { bookName: "Tù Nhân – Freida McFadden", categories: ["Lãng Mạn", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "https://adpvn.co/s/4X30A", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tu-nhan.jpg" },
+            { bookName: "Đại Dịch Hủy Diệt (Bộ 2 tập) - Stephen King", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "https://adpvn.co/s/4kK9Q", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dai-dich-huy-diet-bo-2-tap.jpg" },
+            { bookName: "Thảm Án Ma Nơ Canh - Stanislas-Andre Steeman", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/eojm0", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-an-ma-no-canh.jpg" },
+            { bookName: "Án Mạng Trong Lớp Học - Asakura Akinari", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/N2daL", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-trong-lop-hoc.jpg" },
+            { bookName: "Đêm Yên Tĩnh - Sophie Hannah", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dem-yen-tinh.jpg" },
+            { bookName: "Kỳ Án Pháp Y 1 – Mật Mã Tử Vong - Lục Ngoạn", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://adpvn.co/s/NEqDn", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-phap-y-mat-ma-tu-vong-chuyen-chua-ke-sau-canh-cua-phap-y.jpg" },
+            { bookName: "Án Mạng Giữa Không Trung - Agatha Christie", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4ZJ9w", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-giua-khong-trung.jpg" },
+            { bookName: "Grasshopper – Sát Thủ Báo Thù - Isaka Kotaro", categories: ["Phiêu Lưu", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/erJ7p", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/grasshopper-sat-thu-bao-thu.jpg" },
+            { bookName: "Bầy Mèo Nổi Loạn - Okamoto Kido", categories: ["Huyền Ảo", "Kinh Dị", "Tôn Giáo", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "https://adpvn.co/s/4X3RW", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/okamoto-kido-tuyen-tap-bay-meo-noi-loan.jpg" },
+            { bookName: "Giải Mã Pháp Y – Những Câu Chuyện Từ Bóng Tối - Val McDermid", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4kK7P", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/giai-ma-phap-y-nhung-cau-chuyen-tu-bong-toi.jpg" },
+            { bookName: "Những Câu Chuyện Kinh Dị Khiến Bạn Dựng Tóc Gáy - Quỷ Cổ Nhân", categories: ["Huyền Ảo", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4POnm", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nhung-cau-chuyen-kinh-di-khien-ban-dung-toc-gay.jpg" },
+            { bookName: "Người Đàn Ông Ấy - Hirano Keichiro", categories: ["Lãng Mạn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/NBmWx", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nguoi-dan-ong-ay.jpg" },
+            { bookName: "Nghịch Lý 13 - Higashino Keigo", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4yRxz", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nghich-ly-13.jpg" },
+            { bookName: "Bút Ký Bảo Vệ Cổ Vật Trung Hoa - Nạp Lan Lãng Nguyệt", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4xRy8", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/but-ky-bao-ve-co-vat-trung-hoa.jpg" },
+            { bookName: "Thảm Họa Tuyết Trắng - Higashino Keigo", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-hoa-tuyet-trang.jpg" },
+            { bookName: "Cuộc Chiến Trắng - Hoàng Dục Đức", categories: ["Đô Thị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/cuoc-chien-trang.jpg" },
+            { bookName: "Con Lửng – Fredrik P. Winter", categories: ["Hiện Thực", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/con-lung.jpg" },
+            { bookName: "Nhật Ký Điều Tra – Đằng Sau Tội Ác - Lưu Tinh Thần", categories: ["Hồi Ký", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VM2Jx", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nhat-ky-dieu-tra-dang-sau-toi-ac.jpg" },
+            { bookName: "Tội Ác Có Thật - Jamie Frater", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/toi-ac-co-that.jpg" },
+            { bookName: "Cái Bóng Trầm Mặc – Dật An", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/cai-bong-tram-mac.jpg" },
+            { bookName: "Án Mạng Trên Bến Thuyền - Paula Hawkins", categories: ["Huyền Ảo", "Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/eGKEP", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-tren-ben-thuyen.jpg" },
+            { bookName: "Dưới Cánh Xương Tàn - Kristen Perrin", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ho-so-castle-knoll-1-duoi-canh-xuong-tan.jpg" },
+            { bookName: "Vật Chứng Mất Tích - David Baldacci", categories: ["Hiện Đại", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vat-chung-mat-tich.jpg" },
+            { bookName: "Điểm Đoạt Mạng – Ngô Hiểu Lạc - Ngô Hiểu Lạc", categories: ["Kinh Dị", "Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/diem-doat-mang.jpg" },
+            { bookName: "Kỳ Án Pháp Y 2: Truy Tìm Bằng Chứng – Lời Thì Thầm Của Tử Thi - Lục Ngoạn", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-phap-y-tap-2-truy-tim-bang-chung-loi-thi-tham-cua-tu-thi.jpg" },
+            { bookName: "Án Mạng Vùng Lưỡng Hà - Agatha Christie", categories: ["Kinh Dị", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4yRKj", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/an-mang-vung-luong-ha.jpg" },
+            { bookName: "Hõm Chết – David Baldacci", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/hom-chet.jpg" },
+            { bookName: "Ngôi Nhà Muôn Cánh Cửa - Tan Twan Eng", categories: ["Lịch Sử", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ngoi-nha-muon-canh-cua.jpg" },
+            { bookName: "Báo Thù – Mười Một Câu Chuyện Tăm Tối - Ogawa Yoko", categories: ["Hiện Đại", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Truyện Ngắn"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bao-thu-muoi-mot-cau-chuyen-tam-toi.jpg" },
+            { bookName: "Tàng Long Quyết - Thân Thị Sơn Nhân", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Viễn Tưởng"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tang-long-quyet.jpg" },
+            { bookName: "Truy Đuổi Khói Tuyết - Higashino Keigo", categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/truy-duoi-khoi-tuyet.jpg" },
+            { bookName: "Vũ Điệu Cuồng Phong - Higashino Keigo", categories: ["Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vu-dieu-cuong-phong.jpg" },
+            { bookName: "Sát Nhân Trong Chiếc Hộp Mắt Ma - Masahiro Imamura", categories: ["Kinh Dị", "Viễn Tưởng", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/sat-nhan-trong-chiec-hop-mat-ma.jpg" },
+            { bookName: "Đêm Định Mệnh Ở Barcelona - Cornell Woolrich", categories: ["Hiện Đại", "Kinh Dị", "Truyện Ngắn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/dem-dinh-menh-o-barcelona.jpg" },
+            { bookName: "Kẻ Khác – Guillaume Musso", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "#", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ke-khac.jpg" },
+            { bookName: "Phân Tích Hành Vi Phạm Tội - Moriarty K", categories: ["Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vl3w5", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/phan-tich-hanh-vi-pham-toi-giai-ma-ky-an-the-gioi.jpg" },
+            { bookName: "Tấm Gương Nứt Vỡ - Agatha Christie", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/eqkJR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tam-guong-nut-vo.jpg" },
+            { bookName: "Quỷ Tiết – Hồng Nương Tử", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/4Q5D2", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/quy-tiet.jpg" },
+            { bookName: "Bảy Ngày Chờ Chết - Holly Jackson", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/V0gd5", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bay-ngay-cho-chet.jpg" },
+            { bookName: "Ma Trùng - Dị Thể – Chan Ho-Kei", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Tâm Lý Học"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vmvg7", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ma-trung.jpg" },
+            { bookName: "Ván Cược – Oh Yoon-Hee", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4Lr7Y", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/van-cuoc.jpg" },
+            { bookName: "Thám Tử Thứ Tám - Alex Pavesi", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/eno2L", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tham-tu-thu-tam.jpg" },
+            { bookName: "Chết Chùm – Donald Goines", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "https://adpvn.co/s/VpoaW", buyLink: "https://adpvn.co/s/V9oQM", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/chet-chum.jpg" },
+            { bookName: "Bù Nhìn – Kim Lăng Vân", categories: ["Kinh Dị", "Tâm Lý Học", "Tiên Hiệp", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VJd77", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bu-nhin.jpg" },
+            { bookName: "Bảy Ngày Phán Quyết - Kōtarō Isaka", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4ajmq", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bay-ngay-phan-quyet.jpg" },
+            { bookName: "Rượu Độc – Higashino Keigo", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Tâm Lý Học"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vd5qw", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ruou-doc.jpg" },
+            { bookName: "Két “Xác” – Hideo Yokoyama", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/N2dJB", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ket-xac.jpg" },
+            { bookName: "Ác Não – Long Vĩ Bình", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VvQ1O", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ac-nao.jpg" },
             { bookName: "Kéo Búa Bao – Alice Feeney", categories: ["Phiêu Lưu", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/NgaRp", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/keo-bua-bao.jpg" },
-			{ bookName: "Danh Sách Trả Thù - Jack Carr", categories: ["Phiêu Lưu", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vwa0p", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/danh-sach-tra-thu.jpg" },
-			{ bookName: "Vương Quốc Tội Lỗi - Jo Nesbø", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/NEqBX", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vuong-quoc-toi-loi.jpg" },
-			{ bookName: "Không Thành Kế – Hô Diên Vân", categories: ["Hiện Đại", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VM27d", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/khong-thanh-ke.jpg" },
-			{ bookName: "Bạn Trai – Freida McFadden", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4xRQk", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ban-trai.jpg" },
-			{ bookName: "Người Phụ Nữ Lừa Cả Thế Giới - Beau Donelly, Nick Toscano", categories: ["Hiện Thực", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4yRq0", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nguoi-phu-nu-lua-ca-the-gioi.jpg" },
-			{ bookName: "Kỳ Án Bảy Mặt Đồng Hồ - Agatha Christie", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4PO7p", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-bay-mat-dong-ho.jpg" },
-			{ bookName: "Bí Mật Của Thiên Thần - Guillaume Musso", categories: ["Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/NDK7J", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bi-mat-cua-thien-than.jpg" },
-			{ bookName: "Oan Hồn Băng Cốc - A Sửu", categories: ["Huyền Ảo", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/eojYR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/oan-hon-bang-coc.jpg" },
-			{ bookName: "Hợp Táng Án - Na Đa", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4kKE8", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/hop-tang-an.jpg" },
-			{ bookName: "Tuyển Tập Truyện Ma - Chiếc Xe Màu Tím - Edith Nesbit", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4X3gq", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/chiec-xe-mau-tim-tuyen-tap-truyen-ma-edith-nesbit.jpg" },
-			{ bookName: "Tiếng Thét Dưới Băng - Camilla Grebe", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/15kls_Of8iUggMS_7PGkpmQ", buyLink: "https://adpvn.co/s/erJ9o", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tieng-thet-duoi-bang-camilla-grebe-26-nguyen-thi-tuoi-dich.jpg" },
-			{ bookName: "Khúc Xương Biết Hát - R. Austin Freeman", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1GnnZ-wd-ca-LQyi8CQlX5A", buyLink: "https://adpvn.co/s/eGK7K", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/khuc-xuong-biet-hat-r-austin-freeman-26-xuan-sinh-dich.jpg" },
-			{ bookName: "Kẻ Chủ Mưu - Shari Lapena", categories: ["Kinh Dị", "Truyện Ngắn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1Reh8GCuKFgOqSO92l6rNgg", buyLink: "https://adpvn.co/s/4Oa79", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ke-chu-muu-shari-lapena-26-orkid-dich.jpg" },
-			{ bookName: "Cô Gái Đến Từ Milan - Giorgio Scerbanenco", categories: ["Hiện Đại", "Hiện Thực", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1j0k7wf9pgE0Idmsr1sRItg", buyLink: "https://adpvn.co/s/Vbp0P", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/co-gai-den-tu-milan-giorgio-scerbanenco-26-mai-trang-dich.jpg" },
-			{ bookName: "Bàn Tay Đen - Arthur B. Reeve", categories: ["Hiện Đại", "Hiện Thực", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1SvpE2GdBL8ZgDD56ZdAtew", buyLink: "https://adpvn.co/s/VWBdb", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ban-tay-den-arthur-b-reeve-26-phi-yen-dich.jpg" },
-			{ bookName: "#", categories: ["#", "#", "#", "#"], downloadLink: "#", buyLink: "#", imageLink: "#" }
+            { bookName: "Danh Sách Trả Thù - Jack Carr", categories: ["Phiêu Lưu", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/Vwa0p", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/danh-sach-tra-thu.jpg" },
+            { bookName: "Vương Quốc Tội Lỗi - Jo Nesbø", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/NEqBX", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vuong-quoc-toi-loi.jpg" },
+            { bookName: "Không Thành Kế – Hô Diên Vân", categories: ["Hiện Đại", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/VM27d", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/khong-thanh-ke.jpg" },
+            { bookName: "Bạn Trai – Freida McFadden", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4xRQk", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ban-trai.jpg" },
+            { bookName: "Người Phụ Nữ Lừa Cả Thế Giới - Beau Donelly, Nick Toscano", categories: ["Hiện Thực", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4yRq0", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/nguoi-phu-nu-lua-ca-the-gioi.jpg" },
+            { bookName: "Kỳ Án Bảy Mặt Đồng Hồ - Agatha Christie", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4PO7p", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ky-an-bay-mat-dong-ho.jpg" },
+            { bookName: "Bí Mật Của Thiên Thần - Guillaume Musso", categories: ["Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"], downloadLink: "#", buyLink: "https://adpvn.co/s/NDK7J", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bi-mat-cua-thien-than.jpg" },
+            { bookName: "Oan Hồn Băng Cốc - A Sửu", categories: ["Huyền Ảo", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/eojYR", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/oan-hon-bang-coc.jpg" },
+            { bookName: "Hợp Táng Án - Na Đa", categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4kKE8", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/hop-tang-an.jpg" },
+            { bookName: "Tuyển Tập Truyện Ma - Chiếc Xe Màu Tím - Edith Nesbit", categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "#", buyLink: "https://adpvn.co/s/4X3gq", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/chiec-xe-mau-tim-tuyen-tap-truyen-ma-edith-nesbit.jpg" },
+            { bookName: "Tiếng Thét Dưới Băng - Camilla Grebe", categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/15kls_Of8iUggMS_7PGkpmQ", buyLink: "https://adpvn.co/s/erJ9o", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/tieng-thet-duoi-bang-camilla-grebe-26-nguyen-thi-tuoi-dich.jpg" },
+            { bookName: "Khúc Xương Biết Hát - R. Austin Freeman", categories: ["Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1GnnZ-wd-ca-LQyi8CQlX5A", buyLink: "https://adpvn.co/s/eGK7K", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/khuc-xuong-biet-hat-r-austin-freeman-26-xuan-sinh-dich.jpg" },
+            { bookName: "Kẻ Chủ Mưu - Shari Lapena", categories: ["Kinh Dị", "Truyện Ngắn", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1Reh8GCuKFgOqSO92l6rNgg", buyLink: "https://adpvn.co/s/4Oa79", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ke-chu-muu-shari-lapena-26-orkid-dich.jpg" },
+            { bookName: "Cô Gái Đến Từ Milan - Giorgio Scerbanenco", categories: ["Hiện Đại", "Hiện Thực", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1j0k7wf9pgE0Idmsr1sRItg", buyLink: "https://adpvn.co/s/Vbp0P", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/co-gai-den-tu-milan-giorgio-scerbanenco-26-mai-trang-dich.jpg" },
+            { bookName: "Bàn Tay Đen - Arthur B. Reeve", categories: ["Hiện Đại", "Hiện Thực", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1SvpE2GdBL8ZgDD56ZdAtew", buyLink: "https://adpvn.co/s/VWBdb", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ban-tay-den-arthur-b-reeve-26-phi-yen-dich.jpg" },
+            { bookName: "Ba Đường Luân Hồi - Vĩ Ngư", categories: ["Huyền Ảo", "Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/1yuf2o984uacjvn3BlFWO1w", buyLink: "https://adpvn.co/s/VvQmO", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/ba-duong-luan-hoi-vi-ngu-26-nha-phong-dich.jpg" },
+            { bookName: "Vũ Điệu Quỷ Satan - Krasznahorkai László", categories: ["Hiện Đại", "Kinh Dị", "Tiểu Thuyết", "Trinh Thám"], downloadLink: "https://1024terabox.com/s/12J-0QVUe8hcavbMI7wexdg", buyLink: "https://adpvn.co/s/e8B0P", imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/vu-dieu-quy-satan-krasznahorkai-laszlo-giap-van-chung-dich.jpg" },
+            { bookName: "#", categories: ["#", "#", "#", "#"], downloadLink: "#", buyLink: "#", imageLink: "#" }
         ];
 
         let currentPage = 1;
         const BOOKS_PER_PAGE = 20;
         let currentFilter = '';
         let currentSearchTerm = '';
-        
-        // Cờ để ngăn việc gọi API TTS liên tục
-        let isReading = false;
+
+        /**
+         * Cập nhật năm hiện tại trong footer
+         */
+        function updateCurrentYear() {
+            const yearElement = document.getElementById('current-year');
+            if (yearElement) {
+                yearElement.textContent = new Date().getFullYear();
+            }
+        }
 
         /**
          * Mở liên kết tải sách trong một tab mới.
+         * Bảo mật: Thêm 'noopener,noreferrer' để tránh Reverse Tabnabbing.
          * @param {string} downloadLink Link tải sách.
          */
         function openBookDownload(downloadLink) {
             // Chỉ mở duy nhất Link Tải Sách
-            window.open(downloadLink, '_blank');
+            window.open(downloadLink, '_blank', 'noopener,noreferrer');
+        }
+
+        /**
+         * Mở liên kết mua sách trong tab mới (ẩn URL ở status bar).
+         * Bảo mật: Thêm 'noopener,noreferrer' để tránh Reverse Tabnabbing.
+         * @param {string} buyLink Link mua sách.
+         */
+        function openBuyLink(buyLink) {
+            window.open(buyLink, '_blank', 'noopener,noreferrer');
         }
 
         /**
@@ -185,7 +120,8 @@
 
             // Reset UI
             document.getElementById('search-input').value = '';
-            document.getElementById('current-filter-text').textContent = 'Lọc Theo Thể Loại';
+            // Reset active state trong Tag Cloud
+            populateCategories();
 
             // Render lại sách với trạng thái mặc định
             renderBooks();
@@ -196,36 +132,47 @@
 
 
         /**
-         * Trích xuất và trả về danh sách các thể loại duy nhất, sắp xếp A-Z.
-         * @returns {string[]} Mảng các thể loại duy nhất.
+         * Trích xuất và trả về danh sách các thể loại kèm số lượng.
          */
-        function extractCategories() {
-            const categories = new Set();
+        function extractCategoriesWithCount() {
+            const counts = {};
+            let total = 0;
             mockBookData.forEach(book => {
-                book.categories.forEach(cat => categories.add(cat));
+                if (book.bookName !== '#' && Array.isArray(book.categories)) {
+                    total++;
+                    book.categories.forEach(cat => {
+                        if(cat !== '#') {
+                            counts[cat] = (counts[cat] || 0) + 1;
+                        }
+                    });
+                }
             });
-            return Array.from(categories).sort();
+            return { counts, total };
         }
 
         /**
-         * Cập nhật danh sách thể loại vào dropdown lọc trong nội dung chính (không phải menu header).
+         * Cập nhật Đám Mây Thể Loại.
          */
         function populateCategories() {
-            const categories = extractCategories();
-            // Cần lấy thẻ cha của nút "Tất Cả Sách" để thêm nút mới
-            const filterContainer = document.getElementById('category-filter-dropdown').querySelector('.py-1');
+            const { counts, total } = extractCategoriesWithCount();
+            const cloudContainer = document.getElementById('category-cloud');
+            cloudContainer.innerHTML = '';
 
-            // Xóa tất cả các nút lọc trừ nút đầu tiên (Tất Cả Sách) trong Dropdown Lọc Sách
-            while (filterContainer.children.length > 1) {
-                filterContainer.removeChild(filterContainer.lastChild);
-            }
-            
-            // NOTE: Logic cập nhật Menu header và Mobile Menu đã được loại bỏ theo yêu cầu của người dùng.
+            // Tag "Tất Cả"
+            const allActive = currentFilter === '' 
+                ? 'bg-primary text-white ring-2 ring-offset-2 ring-primary' 
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hover:text-primary';
+            cloudContainer.innerHTML += `<button onclick="applyFilter('')" class="px-4 py-2 rounded-full text-sm font-medium transition duration-150 shadow-sm ${allActive}">Tất Cả (${total})</button>`;
 
-            categories.forEach(cat => {
-                // Chỉ cập nhật Dropdown Lọc Sách (trong main content)
-                const filterButton = `<button onclick="applyFilter('${cat}')" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">${cat}</button>`;
-                filterContainer.innerHTML += filterButton;
+            // Các thể loại khác (Sắp xếp A-Z)
+            const sortedCategories = Object.keys(counts).sort();
+
+            sortedCategories.forEach(cat => {
+                const count = counts[cat];
+                const isActive = currentFilter === cat 
+                    ? 'bg-primary text-white ring-2 ring-offset-2 ring-primary' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hover:text-primary';
+                cloudContainer.innerHTML += `<button onclick="applyFilter('${cat}')" class="px-4 py-2 rounded-full text-sm font-medium transition duration-150 shadow-sm ${isActive}">${cat} (${count})</button>`;
             });
         }
 
@@ -236,13 +183,16 @@
         function applyFilter(category) {
             currentFilter = category;
             currentPage = 1; // Reset về trang 1 khi lọc
-            document.getElementById('current-filter-text').textContent = category || 'Lọc Theo Thể Loại';
-            document.getElementById('category-filter-dropdown').classList.add('hidden');
+            
+            // Cập nhật UI của tag cloud để hiển thị tag đang chọn
+            populateCategories();
+
             // Đảm bảo thanh tìm kiếm không bị ghi đè, chỉ reset nếu đang lọc từ HOME/LOGO
             if (!currentSearchTerm) {
                 document.getElementById('search-input').value = '';
             }
             renderBooks();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         /**
@@ -253,107 +203,13 @@
             currentPage = 1; // Reset về trang 1 khi tìm kiếm
             renderBooks();
         }
-        
-        // Hàm để hiển thị trạng thái loading trên card cụ thể (Chỉ còn dùng cho TTS)
-        function setLoadingState(bookName, isLoading) {
-            const idPrefix = 'tts-loading-';
-            const buttonIdPrefix = 'tts-btn-';
-            const loadingElement = document.getElementById(idPrefix + bookName.replace(/\s/g, '-'));
-            const buttonElement = document.getElementById(buttonIdPrefix + bookName.replace(/\s/g, '-'));
-
-            if (loadingElement) {
-                loadingElement.classList.toggle('hidden', !isLoading);
-            }
-            if (buttonElement) {
-                buttonElement.disabled = isLoading;
-                if(isLoading) {
-                    buttonElement.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    buttonElement.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            }
-        }
-        
-        /**
-         * Tương tác với Gemini TTS API để đọc tên sách.
-         * @param {string} bookName Tên sách cần đọc.
-         */
-        async function readBookTitle(bookName) {
-            if (isReading) return;
-            isReading = true;
-            setLoadingState(bookName, true);
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-            const prompt = `Nói một cách vui vẻ và rõ ràng: "${bookName}" của bạn.`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: "Kore" } // Giọng tiếng Việt phù hợp
-                        }
-                    }
-                },
-            };
-
-            try {
-                const response = await fetchWithRetry(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
-                    
-                    const pcmData = base64ToArrayBuffer(audioData);
-                    // API trả về signed PCM16 audio data.
-                    const pcm16 = new Int16Array(pcmData);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-                    
-                    // Phát audio
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-                    
-                    audio.onended = () => {
-                        isReading = false;
-                        setLoadingState(bookName, false);
-                    };
-                    audio.onerror = () => {
-                        console.error("Lỗi khi phát audio.");
-                        isReading = false;
-                        setLoadingState(bookName, false);
-                    };
-                } else {
-                    console.error("Dữ liệu audio không hợp lệ hoặc bị thiếu.");
-                }
-
-            } catch (error) {
-                console.error("Lỗi khi gọi API Gemini (TTS):", error);
-                isReading = false;
-            } finally {
-                // Nếu có lỗi, đảm bảo loading state được tắt (trừ khi audio đang phát)
-                if (!isReading) {
-                    setLoadingState(bookName, false);
-                }
-            }
-        }
-
 
         /**
          * Render danh sách sách, bao gồm sắp xếp A-Z, lọc, tìm kiếm và phân trang.
          */
         function renderBooks() {
-            let filteredBooks = mockBookData;
+            // Loại bỏ dòng dữ liệu rác '#'
+            let filteredBooks = mockBookData.filter(book => book.bookName !== '#');
 
             // 1. Lọc theo Thể loại (nếu có)
             if (currentFilter) {
@@ -390,7 +246,7 @@
             // 4. Render Card-Book
             bookListElement.innerHTML = booksToDisplay.map(book => {
                 // LOGIC: Kiểm tra link bắt đầu bằng '#'
-                const isUpdating = book.downloadLink.startsWith('#');
+                const isUpdating = !book.downloadLink || book.downloadLink.startsWith('#');
                 const buttonText = isUpdating ? 'Đang Cập Nhật' : 'Tải Về';
                 const buttonClass = isUpdating ? 
                     'bg-gray-400 cursor-not-allowed text-gray-700 opacity-80' : 
@@ -398,6 +254,15 @@
                 
                 // Cập nhật: chỉ gọi openBookDownload với downloadLink
                 const onClickAction = isUpdating ? 'disabled' : `onclick="openBookDownload('${book.downloadLink}')"`;
+                
+                // Logic cho nút Mua Sách (nếu link là # thì ẩn hoặc disable)
+                const isBuyLinkValid = book.buyLink && !book.buyLink.startsWith('#');
+                const buyButtonClass = !isBuyLinkValid ? 
+                    'bg-gray-300 cursor-not-allowed text-gray-500' : 
+                    'bg-accent text-white hover:bg-orange-600 transition duration-150 shadow-md transform hover:scale-[1.02] active:scale-95';
+                
+                // SỬA ĐỔI: Dùng button + onclick thay vì thẻ a + href để ẩn link ở góc trái
+                const buyAction = isBuyLinkValid ? `onclick="openBuyLink('${book.buyLink}')"` : 'disabled';
                 
                 const bookNameId = book.bookName.replace(/\s/g, '-');
 
@@ -412,27 +277,19 @@
 
                     <!-- Phần Tên và Nút Tải -->
                     <div class="p-3 sm:p-4 flex flex-col justify-between flex-grow">
-                        <!-- Tên sách và nút TTS -->
-                        <div class="flex items-start justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800 line-clamp-2 mb-2 mr-2" title="${book.bookName}">${book.bookName}</h3>
-                            <div class="flex-shrink-0 relative">
-                                <button id="tts-btn-${bookNameId}" onclick="readBookTitle('${book.bookName}')" class="text-gray-500 hover:text-primary transition duration-150 p-1 rounded-full hover:bg-gray-100 focus:outline-none" title="Nghe tên sách">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.727M7 13a1 1 0 100-2 1 1 0 000 2zm12-2a1 1 0 100 2 1 1 0 000-2zM4 12H3"></path></svg>
-                                </button>
-                                <div id="tts-loading-${bookNameId}" class="absolute inset-0 flex items-center justify-center hidden bg-white bg-opacity-75 rounded-full">
-                                    <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                </div>
-                            </div>
+                        <!-- Tên sách (Đã bỏ TTS) -->
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="text-lg font-semibold text-gray-800 line-clamp-2 mr-2" title="${book.bookName}">${book.bookName}</h3>
                         </div>
 
                         <p class="text-xs text-gray-500 mb-3 line-clamp-1">
                              Thể loại: ${book.categories.join(', ')}
                         </p>
                         
-                        <!-- Nút Mua Sách (Mới) -->
-                        <a href="${book.buyLink}" target="_blank" class="block w-full text-center py-2 rounded-lg font-medium bg-accent text-white hover:bg-orange-600 transition duration-150 shadow-md mb-3 transform hover:scale-[1.02] active:scale-95">
-                            Mua Sách
-                        </a>
+                        <!-- Nút Mua Sách (Đã chuyển thành button) -->
+                        <button ${buyAction} class="block w-full text-center py-2 rounded-lg font-medium mb-3 ${buyButtonClass}">
+                            ${isBuyLinkValid ? 'Mua Sách' : 'Hết Hàng'}
+                        </button>
 
                         <!-- Nút Tải Về/Đang Cập Nhật -->
                         <button ${onClickAction === 'disabled' ? 'disabled' : onClickAction} class="w-full text-center py-2 rounded-lg font-medium shadow-md ${buttonClass}">
@@ -493,47 +350,49 @@
         }
 
 
-        // --- Logic cho Modal Donate ---
+        // --- Logic cho Modal Đa Dụng ---
 
-        function openDonateModal() {
-            document.getElementById('donate-modal').classList.remove('hidden');
-            document.getElementById('donate-modal').classList.add('flex');
+        /**
+         * Mở Modal
+         * @param {string} modalId ID của modal cần mở ('donate-modal', 'privacy-modal', 'terms-modal').
+         */
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden'; // Ngăn cuộn trang chính
+            }
         }
 
-        function closeDonateModal(event) {
-            // Kiểm tra nếu click không phải là modal-content
-            if (event && event.target.id !== 'donate-modal') return;
-
-            document.getElementById('donate-modal').classList.add('hidden');
-            document.getElementById('donate-modal').classList.remove('flex');
+        /**
+         * Đóng Modal.
+         * @param {Event} event Event click (chỉ đóng khi click vào nền).
+         * @param {string} modalId ID của modal cần đóng.
+         */
+        function closeModal(event, modalId) {
+            const modal = document.getElementById(modalId);
+            // Nếu click vào nền (event.target là chính modal) HOẶC không có event (gọi từ nút đóng X)
+            if (!event || event.target.id === modalId) {
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.body.style.overflow = ''; // Cho phép cuộn lại trang chính
+                }
+            }
         }
         
-        // --- Logic cho Dropdown Lọc và Mobile Menu ---
+        // --- Logic cho Mobile Menu ---
         
         document.addEventListener('DOMContentLoaded', () => {
             // Khởi tạo: chèn thể loại vào Dropdown Lọc và render sách lần đầu
             populateCategories();
             renderBooks();
-            
-            // 1. Toggle Dropdown Lọc (Filter Button) - Vẫn giữ lại ở khu vực tìm kiếm
-            document.getElementById('category-filter-button').addEventListener('click', (e) => {
-                e.stopPropagation(); // Ngăn chặn việc click button đóng ngay lập tức
-                document.getElementById('category-filter-dropdown').classList.toggle('hidden');
-            });
+            updateCurrentYear(); // Cập nhật năm
 
             // 2. Toggle Mobile Menu
             document.getElementById('mobile-menu-button').addEventListener('click', () => {
                 const menu = document.getElementById('mobile-menu');
                 menu.classList.toggle('hidden');
-            });
-
-            // 3. Đóng Dropdown Lọc khi click ra ngoài
-            window.addEventListener('click', (e) => {
-                // Đóng Dropdown Lọc
-                const filterBtn = document.getElementById('category-filter-button');
-                const filterDropdown = document.getElementById('category-filter-dropdown');
-                if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
-                    filterDropdown.classList.add('hidden');
-                }
             });
         });
