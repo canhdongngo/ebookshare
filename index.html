@@ -3,7 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cải thiện bảo mật: Content Security Policy cơ bản -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:;">
+    
     <title>Web Chia Sẻ Sách - Thư Viện Miễn Phí</title>
+
+    <!-- ************************************ -->
+    <!-- BỔ SUNG CÁC THẺ META CẦN THIẾT (SEO & SOCIAL) -->
+    <!-- ************************************ -->
+
+    <!-- 1. SEO CƠ BẢN -->
+    <meta name="description" content="Thư viện eBook miễn phí, tổng hợp các thể loại Trinh Thám, Kinh Dị, Tiểu Thuyết, Lãng Mạn. Tải sách PDF, PRC, EPUB chất lượng cao.">
+    <meta name="keywords" content="sách miễn phí, ebook, tải sách, trinh thám, kinh dị, tiểu thuyết, thư viện sách, download ebook">
+    <link rel="canonical" href="[ĐƯỜNG DẪN CHÍNH CỦA TRANG WEB]">
+    
+    <!-- 2. OPEN GRAPH (Dùng cho Facebook, Zalo, LinkedIn và các mạng xã hội khác) -->
+    <meta property="og:title" content="E-BookShare | Thư Viện Sách Miễn Phí Khổng Lồ">
+    <meta property="og:description" content="Tải miễn phí hàng ngàn sách Trinh Thám, Kinh Dị, Tiểu Thuyết chất lượng cao.">
+    <meta property="og:image" content="https://placehold.co/1200x630/059669/ffffff?text=E-BookShare+Free+Library">
+    <meta property="og:url" content="[ĐƯỜNG DẪN CHÍNH CỦA TRANG WEB]">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="E-BookShare">
+
+    <!-- 3. TWITTER CARD (Dùng cho Twitter/X) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="E-BookShare | Thư Viện Sách Miễn Phí Khổng Lồ">
+    <meta name="twitter:description" content="Tải miễn phí hàng ngàn sách Trinh Thám, Kinh Dị, Tiểu Thuyết chất lượng cao.">
+    <meta name="twitter:image" content="https://placehold.co/1200x675/059669/ffffff?text=E-BookShare+Free+Library+Twitter">
+
+    <!-- 4. TƯƠNG THÍCH TRÌNH DUYỆT (Tùy chọn) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#059669">
+    <meta name="msapplication-TileColor" content="#059669">
+
+    <!-- ************************************ -->
+    
     <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Cấu hình Tailwind cho font Inter -->
@@ -19,6 +54,8 @@
                         'secondary': '#10b981', // Emerald 500
                         'dark-bg': '#1f2937', // Gray 800
                         'accent': '#f97316', // Orange for Buy button
+                        'footer-dark': '#1e293b', // Slate 800 cho footer
+                        'footer-text': '#cbd5e1', // Slate 300 cho chữ
                     }
                 }
             }
@@ -42,7 +79,7 @@
                     <!-- Menu Chính (Desktop) - Chỉ còn HOME và DONATE -->
                     <nav class="hidden md:flex space-x-4">
                         <a href="#" onclick="resetAppAndScroll()" class="text-gray-600 hover:text-primary transition duration-150 font-medium">HOME</a>
-                        <button onclick="openDonateModal()" class="text-gray-600 hover:text-primary transition duration-150 font-medium">DONATE</button>
+                        <button onclick="openModal('donate-modal')" class="text-gray-600 hover:text-primary transition duration-150 font-medium">DONATE</button>
                     </nav>
                 </div>
 
@@ -57,39 +94,26 @@
         <div id="mobile-menu" class="md:hidden hidden">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a href="#" onclick="resetAppAndScroll(); document.getElementById('mobile-menu').classList.add('hidden');" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary">HOME</a>
-                <button onclick="openDonateModal()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary">DONATE</button>
+                <button onclick="openModal('donate-modal')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary">DONATE</button>
             </div>
         </div>
     </header>
 
     <!-- Nội Dung Chính -->
     <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-extrabold text-gray-800 mb-6">Thư Viện Sách Miễn Phí</h1>
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-6 text-center md:text-left">Thư Viện Sách Miễn Phí</h1>
 
-        <!-- Thanh Tìm Kiếm và Nút Lọc -->
-        <div class="mb-8 flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <!-- Thanh Tìm Kiếm -->
-            <div class="relative flex-grow">
+        <!-- Đám Mây Thể Loại (Tag Cloud) -->
+        <div id="category-cloud" class="mb-6 flex flex-wrap gap-2 justify-center md:justify-start">
+            <!-- Các thẻ thể loại sẽ được JS chèn vào đây -->
+        </div>
+
+        <!-- Thanh Tìm Kiếm -->
+        <div class="mb-8">
+            <!-- Đã xóa max-w-2xl mx-auto md:mx-0 để thanh tìm kiếm full width -->
+            <div class="relative w-full">
                 <input type="text" id="search-input" onkeyup="handleFilter()" placeholder="Tìm kiếm sách theo tên..." class="w-full py-3 pl-10 pr-4 border border-gray-300 rounded-xl shadow-inner focus:ring-primary focus:border-primary transition duration-150">
                 <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-
-            <!-- Nút Lọc Theo Thể Loại (Vẫn giữ lại ở đây để lọc sách) -->
-            <div class="relative inline-block text-left">
-                <button id="category-filter-button" type="button" class="inline-flex justify-center w-full rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150">
-                    <span id="current-filter-text">Lọc Theo Thể Loại</span>
-                    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-
-                <!-- Dropdown Lọc -->
-                <div id="category-filter-dropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none hidden z-50">
-                    <div class="py-1">
-                        <button onclick="applyFilter('')" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tất Cả Sách</button>
-                        <!-- Thể loại lọc sẽ được JS chèn vào đây (A-Z) -->
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -110,12 +134,87 @@
 
     </main>
 
+    <!-- ************************************ -->
+    <!-- FOOTER -->
+    <!-- ************************************ -->
+    <footer class="bg-footer-dark mt-12 py-8 sm:py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <!-- Cột 1: Logo và Mô tả -->
+                <div class="col-span-2 md:col-span-1">
+                    <a href="#" onclick="resetAppAndScroll()" class="text-3xl font-bold tracking-wide text-white mb-3 block">
+                        <span class="text-secondary">E-</span>BookShare
+                    </a>
+                    <p class="text-footer-text text-sm mt-4">
+                        Thư viện sách điện tử miễn phí, nơi chia sẻ tri thức và niềm đam mê đọc sách.
+                    </p>
+                </div>
+
+                <!-- Cột 2: Liên kết nhanh -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Điều Hướng</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" onclick="resetAppAndScroll()" class="text-footer-text hover:text-primary transition duration-150">Trang Chủ</a></li>
+                        <li><a href="#" onclick="applyFilter('Trinh Thám')" class="text-footer-text hover:text-primary transition duration-150">Sách Trinh Thám</a></li>
+                        <li><a href="#" onclick="applyFilter('Kinh Dị')" class="text-footer-text hover:text-primary transition duration-150">Sách Kinh Dị</a></li>
+                        <li><a href="#" onclick="openModal('donate-modal')" class="text-footer-text hover:text-primary transition duration-150">Ủng Hộ (Donate)</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 3: Hỗ Trợ -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Hỗ Trợ</h4>
+                    <ul class="space-y-3">
+                        <!-- Cập nhật: Gọi openModal() với ID của Modal tương ứng -->
+                        <li><a href="#" onclick="openModal('privacy-modal'); return false;" class="text-footer-text hover:text-primary transition duration-150">Chính sách Bảo mật</a></li>
+                        <li><a href="#" onclick="openModal('terms-modal'); return false;" class="text-footer-text hover:text-primary transition duration-150">Điều khoản Sử dụng</a></li>
+                        <li><a href="#" class="text-footer-text hover:text-primary transition duration-150">Liên hệ</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 4: Mạng Xã Hội -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Theo Dõi Chúng Tôi</h4>
+                    <div class="flex space-x-4">
+                        <!-- Facebook -->
+                        <a href="https://facebook.com/[Tên Trang]" target="_blank" rel="noopener noreferrer" class="text-footer-text hover:text-primary transition duration-150 transform hover:scale-110" title="Facebook">
+                            <!-- Icon Facebook SVG -->
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 13.5h2.5l1-4H14v-2c0-1.54 0-2.5 2.7-2.5h2.3V.5H16C12.5 0 11 2.3 11 6.3v3.2H8v4h3v10h4v-10z"/></svg>
+                        </a>
+                        <!-- Twitter (X) -->
+                        <a href="https://twitter.com/[Tên Trang]" target="_blank" rel="noopener noreferrer" class="text-footer-text hover:text-primary transition duration-150 transform hover:scale-110" title="Twitter/X">
+                            <!-- Icon X (Twitter) SVG -->
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.261 8.243 11.239H21.69l-7.022-8.388L22 2.25h-4.456l-3.264 4.417-3.085-4.417H2.25l7.228 8.262-8.243 11.238h4.456l3.264-4.417 3.085 4.417H21.69l-7.022-8.388L22 2.25h-4.456z"/></svg>
+                        </a>
+                        <!-- GitHub -->
+                        <a href="https://github.com/[Tên Repo]" target="_blank" rel="noopener noreferrer" class="text-footer-text hover:text-primary transition duration-150 transform hover:scale-110" title="GitHub">
+                            <!-- Icon GitHub SVG -->
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.423 2.86 8.16 6.839 9.504.499.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.464-1.11-1.464-.908-.618.069-.606.069-.606 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.903.829.091-.643.354-1.088.634-1.33-2.22-.251-4.555-1.116-4.555-4.949 0-1.092.39-1.983 1.029-2.675-.103-.252-.446-1.266.098-2.638 0 0 .84-.27 2.75 1.022A9.607 9.607 0 0112 4.026c.85.004 1.70.115 2.5.352 1.909-1.292 2.747-1.022 2.747-1.022.546 1.372.202 2.386.099 2.638.639.692 1.028 1.583 1.028 2.675 0 3.843-2.336 4.694-4.564 4.943.359.309.678.92.678 1.855 0 1.33-.012 2.398-.012 2.72c0 .267.18.577.688.484C21.144 20.17 24 16.438 24 12.017 24 6.484 19.522 2 14 2h-2z" clip-rule="evenodd"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dòng bản quyền -->
+            <div class="mt-10 pt-6 border-t border-gray-700 text-center">
+                <p class="text-footer-text text-sm">
+                    &copy; <span id="current-year">2020</span> E-BookShare. All rights reserved. | Dữ liệu sách được tổng hợp từ nhiều nguồn, vui lòng ủng hộ tác giả.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ************************************ -->
+    <!-- MODAL ĐA DỤNG (CONTAINER CHUNG CHO TẤT CẢ MODAL) -->
+    <!-- ************************************ -->
+    
     <!-- Modal Donate -->
-    <div id="donate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50" onclick="closeDonateModal(event)">
+    <div id="donate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50 transition-opacity duration-300" onclick="closeModal(event, 'donate-modal')">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 sm:p-8 transform transition-all duration-300" onclick="event.stopPropagation()">
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-2xl font-bold text-primary">Cảm Ơn Sự Ủng Hộ Của Bạn!</h3>
-                <button onclick="closeDonateModal()" class="text-gray-400 hover:text-gray-600 transition duration-150">
+                <button onclick="closeModal(null, 'donate-modal')" class="text-gray-400 hover:text-gray-600 transition duration-150">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -128,6 +227,83 @@
                      onerror="this.onerror=null;this.src='https://placehold.co/200x200/059669/ffffff?text=QR+CODE+DONATE';"
                      alt="Mã QR Code nhận Donate" class="rounded-lg shadow-lg border-4 border-secondary p-1 mb-4">
                 <p class="text-sm text-gray-500">Quét mã QR để ủng hộ.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Chính sách Bảo mật -->
+    <div id="privacy-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50 transition-opacity duration-300" onclick="closeModal(event, 'privacy-modal')">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full h-[90vh] md:h-[80vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="p-6 sm:p-8 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-primary">Chính sách Bảo mật</h3>
+                <button onclick="closeModal(null, 'privacy-modal')" class="text-gray-400 hover:text-gray-600 transition duration-150">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <!-- Nội dung Chính sách có thể cuộn -->
+            <div class="p-6 sm:p-8 overflow-y-auto text-gray-700 flex-grow">
+                <p class="mb-4 font-semibold">Cập nhật lần cuối: 24/11/2025</p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">1. Thông tin chúng tôi thu thập</h4>
+                <p class="mb-3">
+                    Chúng tôi không thu thập thông tin cá nhân (như tên, email, địa chỉ) từ người dùng, trừ khi bạn tự nguyện cung cấp thông tin đó qua các kênh liên hệ hoặc tính năng trong tương lai.
+                </p>
+                <p class="mb-3">
+                    Chúng tôi có thể thu thập thông tin phi cá nhân (như loại trình duyệt, thời gian truy cập, các trang đã xem) thông qua các công cụ phân tích web tiêu chuẩn nhằm mục đích cải thiện trải nghiệm người dùng.
+                </p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">2. Cookie</h4>
+                <p class="mb-3">
+                    Trang web này có thể sử dụng cookie để lưu trữ tùy chọn người dùng (như bộ lọc thể loại, trạng thái đăng nhập nếu có). Bạn có thể tắt cookie trong cài đặt trình duyệt của mình.
+                </p>
+                
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">3. Liên kết bên ngoài</h4>
+                <p class="mb-3">
+                    Trang web chứa các liên kết đến sách điện tử và liên kết mua sách của bên thứ ba. Chúng tôi không chịu trách nhiệm về nội dung hay chính sách bảo mật của các trang web này. Vui lòng tự nghiên cứu trước khi nhấp vào bất kỳ liên kết nào.
+                </p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">4. Thay đổi Chính sách</h4>
+                <p class="mb-3">
+                    Chính sách Bảo mật này có thể được cập nhật theo thời gian. Mọi thay đổi sẽ được đăng tải trên trang này.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Điều khoản Sử dụng -->
+    <div id="terms-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50 transition-opacity duration-300" onclick="closeModal(event, 'terms-modal')">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full h-[90vh] md:h-[80vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="p-6 sm:p-8 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-primary">Điều khoản Sử dụng</h3>
+                <button onclick="closeModal(null, 'terms-modal')" class="text-gray-400 hover:text-gray-600 transition duration-150">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <!-- Nội dung Điều khoản có thể cuộn -->
+            <div class="p-6 sm:p-8 overflow-y-auto text-gray-700 flex-grow">
+                <p class="mb-4 font-semibold">Cập nhật lần cuối: 24/11/2025</p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">1. Mục đích của trang web</h4>
+                <p class="mb-3">
+                    E-BookShare là một thư viện chia sẻ sách điện tử miễn phí. Mục đích của chúng tôi là lan tỏa văn hóa đọc và tạo điều kiện cho mọi người tiếp cận tri thức dễ dàng hơn.
+                </p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">2. Trách nhiệm về Nội dung (Sách)</h4>
+                <ul class="list-disc ml-6 space-y-2 mb-3">
+                    <li>Dữ liệu sách được thu thập từ nhiều nguồn mở trên internet.</li>
+                    <li>Chúng tôi khuyến khích người dùng mua sách gốc để ủng hộ tác giả và nhà xuất bản.</li>
+                    <li>Chúng tôi không giữ bản quyền nội dung của các cuốn sách được chia sẻ. Nếu bạn là chủ sở hữu bản quyền và muốn gỡ bỏ bất kỳ tác phẩm nào, vui lòng liên hệ với chúng tôi.</li>
+                </ul>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">3. Sử dụng hợp lý</h4>
+                <p class="mb-3">
+                    Người dùng đồng ý chỉ tải xuống và sử dụng sách cho mục đích cá nhân, phi thương mại. Nghiêm cấm mọi hành vi sao chép, phân phối lại hoặc thương mại hóa nội dung sách mà không có sự cho phép của chủ sở hữu bản quyền.
+                </p>
+
+                <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-3">4. Miễn trừ trách nhiệm</h4>
+                <p class="mb-3">
+                    Chúng tôi cung cấp trang web "như hiện trạng" và không đảm bảo về tính chính xác, đầy đủ, hoặc kịp thời của mọi thông tin. Chúng tôi không chịu trách nhiệm đối với bất kỳ thiệt hại nào phát sinh từ việc sử dụng hoặc không thể sử dụng trang web này.
+                </p>
             </div>
         </div>
     </div>
