@@ -638,44 +638,429 @@ const mockBookData = [{
     },
 	{
         bookName: "Hiểu Hết Về Tiền – DK Publishing",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        categories: ["Kinh Tế", "Tài Chính"],
+        downloadLink: "https://1024terabox.com/s/1Ckhx7Kc9iktln6R0QleF1A",
         buyLink: "https://adpvn.co/s/4AB25",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/3ymRS9H8/how-money-works-hieu-het-ve-tien-tac-gia-dk.jpg"
     },
 	{
         bookName: "Hiểu Hết Về Tâm Lý Học - DK Publishing",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        categories: ["Tâm Lý Học"],
+        downloadLink: "https://1024terabox.com/s/14gl8swXfoDtW7c6z8dch8A",
         buyLink: "https://adpvn.co/s/4AB25",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/Y7kPvssr/how-psychology-works-hieu-het-ve-tam-ly-hoc-tac-gia-jo-hemmings.jpg"
     },
 	{
         bookName: "Hiểu Hết Về Triết Học - DK Publishing",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        categories: ["Triết Học"],
+        downloadLink: "https://1024terabox.com/s/1YpKIRvTYxqWOPQ3EVvAXSw",
         buyLink: "https://adpvn.co/s/4AB25",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/JWQLdNbY/hieu-het-ve-triet-hoc.jpg"
     },
 	{
         bookName: "Hiểu Hết Về Kinh Doanh - DK Publishing",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        categories: ["Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/1BWE0xG7aHt8pbLNzez3o7g",
         buyLink: "https://adpvn.co/s/4AB25",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/RTnfWTXM/hieu-het-ve-kinh-doanh-dk.jpg"
     },
 	{
         bookName: "Hiểu Hết Về Quản Lý - DK Publishing",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        categories: ["Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/1zEvr1-_w9u-sIXKZ_DWsrQ",
         buyLink: "https://adpvn.co/s/4AB25",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/zVhZHY0N/hieu-het-ve-quan-ly-dk-kim-luyen-dich.jpg"
     },
 	{
         bookName: "Hiểu Hết Về Cơ Thể - DK Publishing",
+        categories: ["Giáo Dục"],
+        downloadLink: "https://1024terabox.com/s/1Dh7gmdKhiWimMBZPEWRM8g",
+        buyLink: "https://adpvn.co/s/4AB25",
+        imageLink: "https://i.ibb.co/NgncXJNn/hieu-het-ve-co-the-dk.jpg"
+    },
+	{
+        bookName: "Tất Cả Chúng Ta Đều Là Cá – Neil Shubin",
+        categories: ["Giáo Dục"],
+        downloadLink: "https://1024terabox.com/s/1KJzKOVdx3EIq0EyVUVZl6A",
+        buyLink: "#",
+        imageLink: "https://i.ibb.co/GfJGtKsX/36066039301-c0bbdf7486-o.jpg"
+    },
+	{
+        bookName: "Ngôi Nhà Số 11 - Sophie Hannah",
+        categories: ["Kinh Dị", "Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1wt_GiBoBC9TyQWHAscKl8w",
+        buyLink: "#",
+        imageLink: "https://i.ibb.co/gFDGtB9m/ngoi-nha-so-11-sophie-hannah-26-nguyen-viet-dung-dich.jpg"
+    },
+	{
+        bookName: "Mùa Thu Của Mèo Holmes - Akagawa Jiro",
+        categories: ["Hài Hước", "Tiểu Thuyết", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1mmDPOJXrkSjOFgawMihmww",
+        buyLink: "#",
+        imageLink: "https://i.ibb.co/tM5KLNP0/mua-thu-cua-meo-holmes-akagawa-jiro-26-hai-duong-dich.jpg"
+    },
+	{
+        bookName: "Tâm Trí Tội Phạm - Sam Kean",
+        categories: ["Tâm Lý Học", "Trinh Thám", "Văn Hóa - Xã Hội", "Y Học"],
+        downloadLink: "https://1024terabox.com/s/10CDoZKpqO5gsi1vjtReTZg",
+        buyLink: "https://adpvn.co/s/V7rnx",
+        imageLink: "https://i.ibb.co/JWCZVg4X/tam-tri-toi-pham-sam-kean-1980-novel-dich-huy-nguyen-dich.jpg"
+    },
+	{
+        bookName: "Muôn Kiếp Nhân Sinh Tập 1 - Nguyễn Phong",
+        categories: ["Kỹ Năng Sống"],
+        downloadLink: "https://1024terabox.com/s/1_JE3_F0BDl8iVUOT1CKcqA",
+        buyLink: "https://adpvn.co/s/4xlxX",
+        imageLink: "https://i.ibb.co/jvM3wSyX/muon-kiep-nhan-sinh.jpg"
+    },
+	{
+        bookName: "Muôn Kiếp Nhân Sinh Tập 2 - Nguyễn Phong",
+        categories: ["Triết Học"],
+        downloadLink: "https://1024terabox.com/s/1w98Df3_Cy_8rvlNNPLoEBw",
+        buyLink: "https://adpvn.co/s/4xlxX",
+        imageLink: "https://i.ibb.co/k2qTVsqm/muon-kiep-nhan-sinh-2.jpg"
+    },
+	{
+        bookName: "Muôn Kiếp Nhân Sinh Tập 3 - Nguyễn Phong",
+        categories: ["Triết Học"],
+        downloadLink: "https://1024terabox.com/s/1OJ7fogmqUa1JYGb5E3jXvQ",
+        buyLink: "https://adpvn.co/s/4xlxX",
+        imageLink: "https://i.ibb.co/p6PJZp16/muon-kiep-nhan-sinh-tap-3.jpg"
+    },
+	{
+        bookName: "Đường Mây Trên Đất Hoa - Nguyên Phong",
+        categories: ["Triết Học"],
+        downloadLink: "https://1024terabox.com/s/1EEp_8UvMvZYJEjRmXmUXOQ",
+        buyLink: "https://adpvn.co/s/4LJPn",
+        imageLink: "https://i.ibb.co/SwJPPf4p/duong-may-tren-dat-hoa.jpg"
+    },
+	{
+        bookName: "#",
         categories: ["#", "#", "#", "#"],
         downloadLink: "#",
-        buyLink: "https://adpvn.co/s/4AB25",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
+        imageLink: "#"
+    },
+	{
+        bookName: "#",
+        categories: ["#", "#", "#", "#"],
+        downloadLink: "#",
+        buyLink: "#",
         imageLink: "#"
     },
 	{
