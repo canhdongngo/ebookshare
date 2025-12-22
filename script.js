@@ -750,7 +750,7 @@ const mockBookData = [{
     },
 	{
         bookName: "30 Ngày Biết Đệm Tây Ban Cầm - Nguyên Phong",
-        categories: ["Văn Hoá - Xã Hội"],
+        categories: ["Văn Hóa - Xã Hội"],
         downloadLink: "https://1024terabox.com/s/1UBtLpTDuZS8_JJAm_PnsVQ",
         buyLink: "#",
         imageLink: "https://i.ibb.co/8LH2L60z/30-ngay-biet-dem-tay-ban-cam.jpg"
@@ -771,7 +771,7 @@ const mockBookData = [{
     },
 	{
         bookName: "Siêu Án Mạng - Higashino Keigo",
-        categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Văn Hoá - Xã Hội"],
+        categories: ["Phiêu Lưu", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"],
         downloadLink: "#",
         buyLink: "#",
         imageLink: "https://i.ibb.co/PZ5LjHY2/sieu-an-mang-noi-uu-phien-cua-cac-nha-van-trinh-tham.jpg"
@@ -792,7 +792,7 @@ const mockBookData = [{
     },
 	{
         bookName: "Những Chàng Trai Baltimore - Joel Dicker",
-        categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hoá - Xã Hội"],
+        categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám", "Văn Hóa - Xã Hội"],
         downloadLink: "https://1024terabox.com/s/1y8HSC2IqTGBjBRlgJwzqyw",
         buyLink: "#",
         imageLink: "https://i.ibb.co/v46dDmRJ/nhung-chang-trai-baltimore.jpg"
@@ -847,46 +847,46 @@ const mockBookData = [{
         imageLink: "https://i.ibb.co/xtZsZbx8/ebook-sau-nguoi-ban-dong-hanh-tap-5-full-prc-pdf-epub-azw3.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Sáu Người Bạn Đồng Hành Tập 6 Ngôi Làng Bị Lụt - Paul Jacques Bonzon",
+        categories: ["Phiêu Lưu", "Thiếu Nhi", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1weXNN4jh5t9qUgmvwejVCg",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/TDLmkKmZ/ngoi-lang-bi-lut-paul-jacques-bonzon.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Sáu Người Bạn Đồng Hành Tập 7 Điếu Xì Gà Bay - Paul Jacques Bonzon",
+        categories: ["Phiêu Lưu", "Thiếu Nhi", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1jkAenz8OkVYB8-ce8OS3_g",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/fzCYRRxN/sau-nguoi-ban-dong-hanh-tap-7-dieu-xi-ga-bay.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Sáu Người Bạn Đồng Hành Tập 8 Kẻ Cướp - Paul Jacques Bonzon",
+        categories: ["Phiêu Lưu", "Thiếu Nhi", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1MsfMSYrjfkotxxcsCX_60A",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/bgKMzYfH/sau-nguoi-ban-dong-hanh-tap-8-ke-cuop.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Lãnh Đạo Bằng Sức Mạnh Trí Tuệ Cảm Xúc - Nhiều Tác Giả",
+        categories: ["Kinh Tế", "Tài Chính", "Kỹ Năng Sống", "Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/10N6eSDtufHubYb-tjYWN4w",
+        buyLink: "https://adpvn.co/s/V0rY9",
+        imageLink: "https://i.ibb.co/d02WXXYt/lanh-dao-bang-suc-manh-tri-tue-cam-xuc-nhieu-tac-gia.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Hôm Qua Là Nhân Viên, Ngày Mai Phải Thăng Tiến - Jeff Mc Manus",
+        categories: ["Kinh Tế", "Tài Chính", "Kỹ Năng Sống", "Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/1ok552ISSTKv3xKruGUQ48w",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/7x8wCT11/hom-qua-la-nhan-vien2c-ngay-mai-phai-thang-tien-jeff-mc-manus.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Dẫn Dắt Sự Thay Đổi - John P. Kotter",
+        categories: ["Kinh Tế", "Tài Chính", "Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/1YtpiHObqsPEDFSMKSzR7BQ",
+        buyLink: "https://adpvn.co/s/eqvDK",
+        imageLink: "https://i.ibb.co/7dnCvPyt/dan-dat-su-thay-doi-john-p-kotter.jpg"
     },
 	{
         bookName: "#",
