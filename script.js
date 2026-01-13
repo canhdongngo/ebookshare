@@ -315,7 +315,7 @@ const mockBookData = [{
         imageLink: "https://ebookvie.com/wp-content/uploads/2025/10/bay-ngay-cho-chet.jpg"
     },
     {
-        bookName: "Ma Trùng - Dị Thể – Chan Ho-Kei",
+        bookName: "Ma Trùng - Dị Thể - Chan Ho-Kei",
         categories: ["Kinh Dị", "Tiểu Thuyết", "Trinh Thám", "Tâm Lý Học"],
         downloadLink: "#",
         buyLink: "https://adpvn.co/s/Vmvg7",
@@ -889,39 +889,39 @@ const mockBookData = [{
         imageLink: "https://i.ibb.co/7dnCvPyt/dan-dat-su-thay-doi-john-p-kotter.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Cạm Bẫy Trong Quản Lý - Clay Carr, Mary Albright",
+        categories: ["Kinh Tế", "Tài Chính", "Kỹ Năng Sống", "Quản Trị"],
+        downloadLink: "https://1024terabox.com/s/1bmtCuzTq3yBtQfiMxivrzQ",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/MDhvJR9Q/cam-bay-trong-quan-ly-mary-albright2c-clay-carr.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Kính Vạn Hoa Chết Chóc: Tập 1 - Tây Tử Tự",
+        categories: ["Kinh Dị"],
+        downloadLink: "https://1024terabox.com/s/11LY9NmIi21acHBolmEJWAg",
+        buyLink: "https://adpvn.co/s/VW7Gm",
+        imageLink: "https://i.ibb.co/xq8h9kKC/kinh-van-hoa-chet-choc-bo-2-tap-tac-gia-tay-tu-tu.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Kính Vạn Hoa Chết Chóc: Tập 2 - Tây Tử Tự",
+        categories: ["Kinh Dị"],
+        downloadLink: "https://1024terabox.com/s/1QXuwGPA1XgtRiZkFNCZYMA",
+        buyLink: "https://adpvn.co/s/VW7Gm",
+        imageLink: "https://i.ibb.co/39HbcrFQ/Kinh-Van-Hoa-Chet-Choc-Tap-2.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Kính Vạn Hoa Chết Chóc: Tập 3 - Tây Tử Tự",
+        categories: ["Kinh Dị"],
+        downloadLink: "https://1024terabox.com/s/1rfnu056pIxcAaA-PcdM7qA",
+        buyLink: "https://adpvn.co/s/463AD",
+        imageLink: "https://i.ibb.co/bRHW8jzV/Kinh-Van-Hoa-Chet-Choc-Tap-3.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Kính Vạn Hoa Chết Chóc: Tập 4 - Tây Tử Tự",
+        categories: ["Kinh Dị"],
+        downloadLink: "https://1024terabox.com/s/1burafiIDnEz9s9rfr8qWeQ",
+        buyLink: "https://adpvn.co/s/4A2J1",
+        imageLink: "https://i.ibb.co/zTScnK0W/Kinh-Van-Hoa-Chet-Choc-Tap-4.jpg"
     },
 	{
         bookName: "#",
