@@ -924,46 +924,46 @@ const mockBookData = [{
         imageLink: "https://i.ibb.co/zTScnK0W/Kinh-Van-Hoa-Chet-Choc-Tap-4.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Thế Giới Bị Quỷ Ám - Carl Sagan",
+        categories: ["Tâm Lý Học"],
+        downloadLink: "https://1024terabox.com/s/1AGNu8K50Snf_gByj74AHtw",
+        buyLink: "https://adpvn.co/s/VpKZ2",
+        imageLink: "https://i.ibb.co/QFjQJPB3/3320.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Dấn Thân - Jeffrey Archer",
+        categories: ["Tâm Lý Học", "Tiểu Thuyết", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1BwJKjI91zVq7DudchtNeeA",
+        buyLink: "https://adpvn.co/s/4LB6A",
+        imageLink: "https://i.ibb.co/vKz336r/dan-than-jeffrey-archer-orkid-dich.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Chim Ưng Maltese - Dashiell Hammett",
+        categories: ["Tiểu Thuyết", "Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1iLFtm4kqw0HLxjSlTPevMg",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/zh7h8NpL/chim-ung-maltese.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Hiểm Họa Ở Nhà Kết - Agatha Christie",
+        categories: ["Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/13syN5FiPIPN6vjBfLXo9hA",
+        buyLink: "https://adpvn.co/s/N2grr",
+        imageLink: "https://i.ibb.co/C5WsxnTL/Hiem-Hoa-O-Nha-Ket.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Nhân Chứng Buộc Tội - Agatha Christie",
+        categories: ["Trinh Thám", "Truyện Ngắn"],
+        downloadLink: "https://1024terabox.com/s/1wskcm00_Q2DJgJu7oDprwA",
+        buyLink: "https://adpvn.co/s/VdP05",
+        imageLink: "https://i.ibb.co/ZzdchGn6/nhan-chung-buoc-toi.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Cây Bách Buồn - Agatha Christie",
+        categories: ["Trinh Thám"],
+        downloadLink: "https://1024terabox.com/s/1U7izrRJTeUOMjGVdPmGPrw",
+        buyLink: "https://adpvn.co/s/4LLgO",
+        imageLink: "https://i.ibb.co/W8q7mQF/34768048464-f97a834527-o.jpg"
     },
 	{
         bookName: "#",
