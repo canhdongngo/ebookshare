@@ -966,18 +966,18 @@ const mockBookData = [{
         imageLink: "https://i.ibb.co/W8q7mQF/34768048464-f97a834527-o.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
+        bookName: "Nữ Thần Báo Oán - Agatha Christie",
+        categories: ["Trinh Thám", "Kinh Dị"],
+        downloadLink: "https://1024terabox.com/s/17vCPYNbIXprJdAuK68YlEw",
         buyLink: "#",
-        imageLink: "#"
+        imageLink: "https://i.ibb.co/C3gSHcgx/Nu-Than-Bao-Oan.jpg"
     },
 	{
-        bookName: "#",
-        categories: ["#", "#", "#", "#"],
-        downloadLink: "#",
-        buyLink: "#",
-        imageLink: "#"
+        bookName: "Văn Minh Việt Nam - Nguyễn Văn Huyên",
+        categories: ["Văn Hóa - Xã Hội"],
+        downloadLink: "https://1024terabox.com/s/1a2bLS4BszrU02OJYlE-crg",
+        buyLink: "https://adpvn.co/s/VpxQo",
+        imageLink: "https://i.ibb.co/yF9zrkW9/van-minh-viet-nam-nguyen-van-huyen.jpg"
     },
 	{
         bookName: "#",
